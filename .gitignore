@@ -1,6 +1,9 @@
 /*
 !/.gitignore
 
+*.meta
+
 !/Assets/
 /Assets/*
 !/Assets/!EAntunes Scripts/
+
