@@ -4,5 +4,4 @@
 !/Assets/
 /Assets/*
 !/Assets/!EAntunes Scripts/
-!/Assets/!EAntunes Scripts/*.meta
-
+*.meta
