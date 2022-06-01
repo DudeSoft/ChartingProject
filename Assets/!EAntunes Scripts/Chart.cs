@@ -4,6 +4,8 @@ using UnityEngine.VFX;
 
 public class Chart : MonoBehaviour
 {
+    [SerializeField] int frameModulo = 90;
+    GameObject refSphere;
     public TextAsset csvFile;
 
     public bool scrollChart = false;
@@ -52,6 +54,8 @@ public class Chart : MonoBehaviour
     {
         if(csvFile != null)
         {
+            refSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            refSphere.transform.localScale = Vector3.one * .05f;
             BuildObjectContainer();
             UpdateBarCount();
             Rescale();
@@ -65,13 +69,16 @@ public class Chart : MonoBehaviour
 
     private void Update()
     {
-        if (scrollChart && Time.frameCount % 90 == 0)
+        if (scrollChart && Time.frameCount % frameModulo == 0)
         {
             ++middleBar;
+            UpdateBarCount();
+            Rescale();
             var barID = middleBar + numBarRange;
             var maxIndex = barObjectContainer.barObjects.Length;
             var bar = barObjectContainer.barObjects[Math.Min(barID, maxIndex - 1)];
 
+            //Converting last/close price to individual INTs for VFX Text display
             char[] numberChars = bar.barData.close.ToString().ToCharArray();
             int[] nums = new int[numberChars.Length - 1];
 
@@ -103,11 +110,13 @@ public class Chart : MonoBehaviour
                 }
             }
 
-            vfx.SetFloat("LastPrice", bar.barData.close);
-            print("Lastprice is " + bar.barData.close);
-
             vfx.SetFloat("ChartHigh", barObjectContainer.currentHigh);
-            vfx.SetFloat("ChartLow", barObjectContainer.currentLow);
+            vfx.SetFloat("ChartLow", barObjectContainer.currentLow);     
+            
+            vfx.SetFloat("LastPrice", bar.barData.close);
+            refSphere.transform.localPosition = new Vector3(.5f, ((bar.barData.close - barObjectContainer.currentLow) / (barObjectContainer.currentHigh - barObjectContainer.currentLow)) - .5f, 0f);
+
+            print("Lastprice is " + bar.barData.close);
         }
 
         if (middleBar != oldMiddleBar)
@@ -204,10 +213,19 @@ public class Chart : MonoBehaviour
                     barObjectContainer.currentLow = barObjects[i].barData.low;
                 }
 
+                if(i == barObjsCount - 1)
+                {
+                    vfx.SetFloat("LastPrice", barObjects[i].barData.close);
+                    refSphere.transform.localPosition = new Vector3(.5f,(barObjects[i].barData.close - barObjectContainer.currentLow) / (barObjectContainer.currentHigh - barObjectContainer.currentLow), 0f);
+                }
 
                 barObjects[i].barObjectPrimitive.SetActive(true);
             }
         }
+
+        vfx.SetFloat("ChartHigh", barObjectContainer.currentHigh);
+        vfx.SetFloat("ChartLow", barObjectContainer.currentLow);
+
     }
 
     void Rescale()
@@ -233,8 +251,6 @@ public class Chart : MonoBehaviour
             priceToHighLowRatio = (barObject.barData.high - barObject.barData.low) / (barObjectContainer.currentHigh - barObjectContainer.currentLow);
         }
 
-        var scaledYValue = priceToHighLowRatio;
-
         spacing = 1f / ((numBarRange * 2) + 1);
 
         var barMidPoint = ((barObject.barData.high - barObject.barData.low) / 2);
@@ -254,15 +270,10 @@ public class Chart : MonoBehaviour
             midPriceRange = barMidPrice - barObjectContainer.currentLow;
             priceRangeOnScreen = barObjectContainer.currentHigh - barObjectContainer.currentLow;
 
-            if (barObject.barID >= Mathf.Max(0, middleBar - numBarRange) && barObject.barID < (middleBar + numBarRange + 1) && barObject.barData.high > barObjectContainer.currentHigh)
-            {
-                print("High " + barObject.barData.high + " > " + barObjectContainer.currentHigh);
-            }
-
             yPos = ((midPriceRange / priceRangeOnScreen) - .5f);
         }
 
-        barObject.barObjectPrimitive.transform.localScale = new Vector3(spacing * .25f, scaledYValue * .5f, spacing * .25f); //multiple here is to make sure the bar width is smaller than the spacing apart
+        barObject.barObjectPrimitive.transform.localScale = new Vector3(spacing * .25f, priceToHighLowRatio * .5f, spacing * .25f); //multiple here is to make sure the bar width is smaller than the spacing apart
 
         var xOffset = 0;
 
@@ -295,10 +306,10 @@ public class Chart : MonoBehaviour
         var parentGO = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
         parentGO.transform.position = Vector3.zero;
-        parentGO.transform.localScale = new Vector3(1f, 1f, .1f);
+        parentGO.transform.localScale = new Vector3(1f, 1f, .0075f);
 
         var parentGORend = parentGO.GetComponent<Renderer>();
-
+         
         if (parentGORend != null)
         {
             parentGOMag = parentGORend.bounds.size;
