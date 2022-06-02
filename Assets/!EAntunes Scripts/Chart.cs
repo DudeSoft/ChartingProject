@@ -21,6 +21,7 @@ public class Chart : MonoBehaviour
     float spacing = 0f;
 
     [SerializeField] Material barMaterial;
+    [SerializeField] Material parentGOMat;
 
     VisualEffect vfx;
     [SerializeField] VisualEffectAsset vfxAsset;
@@ -79,7 +80,7 @@ public class Chart : MonoBehaviour
             var bar = barObjectContainer.barObjects[Math.Min(barID, maxIndex - 1)];
 
             //Converting last/close price to individual INTs for VFX Text display
-            char[] numberChars = bar.barData.close.ToString().ToCharArray();
+            char[] numberChars = bar.barData.close.ToString("F2").ToCharArray();
             int[] nums = new int[numberChars.Length - 1];
 
             int counter = 0;
@@ -313,6 +314,15 @@ public class Chart : MonoBehaviour
         if (parentGORend != null)
         {
             parentGOMag = parentGORend.bounds.size;
+            if(parentGOMat != null)
+            {
+                parentGORend.sharedMaterial = parentGOMat;
+            }
+            else
+            {
+                print("No mat for parentGO");
+                return;
+            }
         }
 
         barObjectContainer.parentGOTransform = parentGO.transform;
